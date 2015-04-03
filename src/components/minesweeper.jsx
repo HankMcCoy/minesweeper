@@ -5,7 +5,7 @@ import { getBoard, revealCell } from '../lib/boardUtil';
 
 const NUM_ROWS = 16;
 const NUM_COLS = 16;
-const NUM_MINES = 40;
+const NUM_MINES = 30;
 
 var Minesweeper = React.createClass({
   getInitialState() {
@@ -67,7 +67,7 @@ var Cell = React.createClass({
         }
         style={{color: getAdjColor(adjacentBombs)}}
         onClick={this.props.onClick}>
-        {adjacentBombs || ''}
+        {!isBomb && isRevealed && adjacentBombs ? adjacentBombs : ''}
       </div>
     );
   }
