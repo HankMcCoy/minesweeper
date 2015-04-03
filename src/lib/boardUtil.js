@@ -23,8 +23,84 @@ export function getBoard(numRows, numCols, numBombs) {
   return board;
 }
 
+/**
+ * Return a board with the correct cells revealed from a click on x, y.
+ */
 export function revealCell(board, x, y) {
-  return board.setIn([y, x, 'isRevealed'], true);
+  var exploredKeys = new Set();
+  var startCell = board.getIn([x, y]);
+
+  if (startCell.get('isBomb')) {
+    // Reveal all bombs
+    exploredKeys = getAllBombKeys(board);
+  }
+  else if (startCell.get('adjacentBombs') > 0) {
+    // Reveal just this cell
+    exploredKeys.add(getCellKey({x, y}));
+  }
+  else {
+    // Reveal all cells devoice of bombs with a path to this cell and their
+    // adjacent cells.
+    exploredKeys = getClearCellsAndAdjacencies(board, x, y);
+  }
+
+  for (let key of exploredKeys) {
+    let coord = getCoordFromKey(key);
+
+    board = board.setIn([coord.x, coord.y, 'isRevealed'], true);
+  }
+
+  return board;
+}
+
+function getClearCellsAndAdjacencies(board, x, y) {
+  var edgeKeys = new Set(getAdjacencies(x, y).map(getCellKey));
+  var nextEdgeKeys = new Set();
+  var exploredKeys = new Set([
+    getCellKey({x, y}),
+    ...edgeKeys
+  ]);
+
+  while (edgeKeys.size) {
+    edgeKeys.forEach(function (edgeKey) {
+      getAdjacencies(getCoordFromKey(edgeKey))
+        .forEach(function (coord) {
+          var key = getCellKey(coord);
+
+          if (!exploredKeys.has(key)) {
+            exploredKeys.add(key);
+
+            if (board.getIn([coord.x, coord.y, 'adjacentBombs']) === 0)
+              nextEdgeKeys.add(key)
+          }
+        });
+    });
+
+    [edgeKeys, nextEdgeKeys] = [nextEdgeKeys, new Set()];
+  }
+
+  return exploredKeys;
+}
+
+function getAllBombKeys(board) {
+  return new Set(
+    board
+      .map((row, y) =>
+        row
+          .map((cell, x) => cell.get('isBomb') ? getCellKey({x, y}) : null)
+          .filter(key => key !== null))
+      .reduce((result, arr) => result.concat(arr), [])
+  );
+}
+
+function getCellKey(coord) {
+  return coord.x + ',' + coord.y;
+}
+
+function getCoordFromKey(cellKey) {
+  var [x, y] = cellKey.split(',');
+
+  return { x, y };
 }
 
 /**
