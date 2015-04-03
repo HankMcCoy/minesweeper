@@ -5,6 +5,7 @@
 
 .minesweeper {
   background: #ddd;
+  font-family: sans-serif;
   height: 100%;
   padding: 1px;
   width: 100%;
@@ -14,6 +15,9 @@
   display: flex;
   flex-flow: column nowrap;
   height: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
 }
 
 .minesweeper__row {
@@ -23,6 +27,7 @@
 }
 
 .minesweeper__cell {
+  align-items: center;
   background: #eee;
   border-color: #888 #333 #333 #888;
   border-radius: 4px;
@@ -31,6 +36,7 @@
   box-sizing: border-box;
   display: inline-flex;
   flex: 1 1 2px;
+  justify-content: center;
   margin: 1px;
 }
 
@@ -48,6 +54,7 @@
 .minesweeper__cell--bomb {
   background: #e33;
   border: none;
+  border-radius: 50%;
 }
 
 .
