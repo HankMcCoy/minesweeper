@@ -14,7 +14,7 @@ export function getBoard(numRows, numCols, numBombs) {
         isBomb: bombCoords.has(getKey(x, y)),
         isRevealed: false,
         adjacentBombs: getAdjacencies(x, y)
-          .filter((neighX, neighY) => bombCoords.has(getKey(neighX, neighY)))
+          .filter((adj) => bombCoords.has(getKey(adj.x, adj.y)))
           .length
       };
     }
@@ -51,7 +51,7 @@ function getKey(x, y) {
  * Get a list of coordinates adjacent to those supplied.
  *
  * Example: getAdjacencies(10, 18)
- *   returns [[9, 17], [9, 18], [9, 19], ...]
+ *   returns [{x: 9, y: 17}, {x: 9, y: 18}, {x: 9, y:19}, ...]
  */
 function getAdjacencies(x, y) {
   return [-1, 0, 1]
@@ -59,6 +59,7 @@ function getAdjacencies(x, y) {
       [-1, 0, 1]
         .filter(dy => dx !== 0 || dy !== 0)
         .map(dy => ({ x: x + dx, y: y + dy }))
-    );
+    )
+    .reduce((result, arr) => result.concat(arr), [])
 }
 
