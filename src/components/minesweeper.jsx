@@ -61,11 +61,12 @@ var Cell = React.createClass({
       <div className={
           classNames(
             'minesweeper__cell',
-            {'minesweeper__cell--bomb': isBomb},
-            {'minesweeper__cell--revealed': isRevealed}
+            {'minesweeper__cell--bomb': isBomb && isRevealed},
+            {'minesweeper__cell--revealed': !isBomb && isRevealed}
           )
         }
-        style={{color: getAdjColor(adjacentBombs)}}>
+        style={{color: getAdjColor(adjacentBombs)}}
+        onClick={this.props.onClick}>
         {adjacentBombs || ''}
       </div>
     );

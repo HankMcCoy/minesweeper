@@ -143,8 +143,9 @@
 
 	    return React.createElement(
 	      "div",
-	      { className: classNames("minesweeper__cell", { "minesweeper__cell--bomb": isBomb }, { "minesweeper__cell--revealed": isRevealed }),
-	        style: { color: getAdjColor(adjacentBombs) } },
+	      { className: classNames("minesweeper__cell", { "minesweeper__cell--bomb": isBomb && isRevealed }, { "minesweeper__cell--revealed": !isBomb && isRevealed }),
+	        style: { color: getAdjColor(adjacentBombs) },
+	        onClick: this.props.onClick },
 	      adjacentBombs || ""
 	    );
 	  }

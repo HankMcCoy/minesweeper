@@ -1,14 +1,53 @@
-.minesweeper__row {
+.minesweeper-container {
+  width: 400px;
+  height: 400px;
+}
+
+.minesweeper {
+  background: #ddd;
+  height: 100%;
+  padding: 1px;
+  width: 100%;
+}
+
+.minesweeper__board {
   display: flex;
+  flex-flow: column nowrap;
+  height: 100%;
+}
+
+.minesweeper__row {
+  align-items: stretch;
+  display: flex;
+  flex-flow: row nowrap;
 }
 
 .minesweeper__cell {
-  border: 1px solid #333;
+  background: #eee;
+  border-color: #888 #333 #333 #888;
+  border-radius: 4px;
+  border-style: solid;
+  border-width: 1px;
+  box-sizing: border-box;
   display: inline-flex;
-  height: 20px;
-  width: 20px;
+  flex: 1 1 2px;
+  margin: 1px;
+}
+
+.minesweeper__cell:before {
+  content: '';
+  display: block;
+  padding-top: 100%;
+}
+
+.minesweeper__cell--revealed {
+  background: none;
+  border: none;
 }
 
 .minesweeper__cell--bomb {
   background: #e33;
+  border: none;
 }
+
+.
