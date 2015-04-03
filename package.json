@@ -1,0 +1,22 @@
+{
+  "name": "minesweeper",
+  "version": "0.0.1",
+  "description": "A minesweeper implementation using React.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hankmccoy/minesweeper"
+  },
+  "author": "Thomas Beirne",
+  "devDependencies": {
+    "babel-core": "^4.7.16",
+    "babel-loader": "^4.3.0",
+    "webpack": "^1.7.3"
+  },
+  "dependencies": {
+    "classnames": "^1.2.0",
+    "core-js": "^0.7.2",
+    "immutable": "^3.7.1",
+    "react": "^0.13.1"
+  }
+}
