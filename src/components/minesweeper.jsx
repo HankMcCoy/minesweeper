@@ -10,7 +10,7 @@ var Minesweeper = React.createClass({
   getInitialState() {
     return {
       isFreshGame: true,
-      board: getBoard(NUM_ROWS, NUM_COLS, NUM_MINES)
+      board: getBoard(NUM_ROWS, NUM_COLS, 0)
     };
   },
   render() {
@@ -21,8 +21,22 @@ var Minesweeper = React.createClass({
     );
   },
   handleCellClick(x, y) {
-    this.setState((prevState) => {
-      board: revealCell(prevState.board, x, y)
+    var board;
+
+    // If this is the first turn, generate the board until we get one that
+    // has a not bomb-neighboring cell at the click location.
+    if (this.state.isFreshGame) {
+      do {
+        board = getBoard(NUM_ROWS, NUM_COLS, NUM_MINES);
+      } while(!(board[x][y].adjacentBombs === 0 && board[x][y].isBomb === false));
+    }
+    else {
+      board = this.state.board;
+    }
+
+    this.setState({
+      isFreshGame: false,
+      board: revealCell(board, x, y)
     });
   }
 });
