@@ -13,7 +13,7 @@ export function getBoard(numRows, numCols, numBombs) {
       board[x][y] = {
         isBomb: bombCoords.has(getKey(x, y)),
         isRevealed: false,
-        adjacentBombs: getAdjacencies({x, y}, {numRows, numCols})
+        adjacentBombs: getNeighbors({x, y}, {numRows, numCols})
           .filter((adj) => bombCoords.has(getCellKey(adj)))
           .length
       };
@@ -28,54 +28,52 @@ export function getBoard(numRows, numCols, numBombs) {
  */
 export function revealCell(board, x, y) {
   var exploredKeys = new Set();
-  var startCell = board.getIn([x, y]);
+  var startCell = board[x][y];
 
-  if (startCell.get('isBomb')) {
+  if (startCell.isBomb) {
     // Reveal all bombs
     exploredKeys = getAllBombKeys(board);
   }
-  else if (startCell.get('adjacentBombs') > 0) {
+  else if (startCell.adjacentBombs > 0) {
     // Reveal just this cell
     exploredKeys.add(getCellKey({x, y}));
   }
   else {
     // Reveal all cells devoice of bombs with a path to this cell and their
     // adjacent cells.
-    exploredKeys = getClearCellsAndAdjacencies(board, x, y);
+    exploredKeys = getClearCellsAndNeighbors(board, x, y);
   }
 
   for (let key of exploredKeys) {
     let coord = getCoordFromKey(key);
 
-    board = board.setIn([coord.x, coord.y, 'isRevealed'], true);
+    board[coord.x][coord.y].isRevealed = true;
   }
 
   return board;
 }
 
-function getClearCellsAndAdjacencies(board, x, y) {
+function getClearCellsAndNeighbors(board, x, y) {
   var boardSize = {
-    numCols: board.size,
-    numRows: board.get(0).size
+    numCols: board.length,
+    numRows: board[0].length
   };
-  var edgeKeys = new Set(getAdjacencies({x, y}, boardSize).map(getCellKey));
+  var startKey = getCellKey({x, y});
+  var edgeKeys = new Set([startKey]);
   var nextEdgeKeys = new Set();
-  var exploredKeys = new Set([
-    getCellKey({x, y}),
-    ...edgeKeys
-  ]);
+  var exploredKeys = new Set([startKey]);
 
   while (edgeKeys.size) {
     edgeKeys.forEach(function (edgeKey) {
-      getAdjacencies(getCoordFromKey(edgeKey), boardSize)
+      getNeighbors(getCoordFromKey(edgeKey), boardSize)
         .forEach(function (coord) {
           var key = getCellKey(coord);
-          var cell = board.getIn([coord.x, coord.y]);
+          var cell = board[coord.x][coord.y];
 
           if (!exploredKeys.has(key)) {
             exploredKeys.add(key);
 
-            if (cell.get('adjacentBombs') === 0)
+            if (cell.adjacentBombs === 0)
               nextEdgeKeys.add(key)
           }
         });
@@ -90,11 +88,9 @@ function getClearCellsAndAdjacencies(board, x, y) {
 function getAllBombKeys(board) {
   return new Set(
     board
-      .toArray()
       .map((col, x) => {
         return col
-          .toArray()
-          .map((cell, y) => cell.get('isBomb') ? getCellKey({x, y}) : null)
+          .map((cell, y) => cell.isBomb ? getCellKey({x, y}) : null)
           .filter(key => key !== null)
        })
       .reduce((result, arr) => result.concat(arr), [])
@@ -134,10 +130,10 @@ function getKey(x, y) {
 /**
  * Get a list of coordinates adjacent to those supplied.
  *
- * Example: getAdjacencies(10, 18)
+ * Example: getNeighbors(10, 18)
  *   returns [{x: 9, y: 17}, {x: 9, y: 18}, {x: 9, y:19}, ...]
  */
-function getAdjacencies(coord, boardSize) {
+function getNeighbors(coord, boardSize) {
   return [-1, 0, 1]
     .map(dx =>
       [-1, 0, 1]

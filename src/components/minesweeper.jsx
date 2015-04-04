@@ -1,4 +1,3 @@
-import Immutable from 'immutable';
 import React from 'react';
 import Board from './board';
 import { getBoard, revealCell } from '../lib/boardUtil';
@@ -11,7 +10,7 @@ var Minesweeper = React.createClass({
   getInitialState() {
     return {
       isFreshGame: true,
-      board: Immutable.fromJS(getBoard(NUM_ROWS, NUM_COLS, NUM_MINES))
+      board: getBoard(NUM_ROWS, NUM_COLS, NUM_MINES)
     };
   },
   render() {
@@ -22,8 +21,8 @@ var Minesweeper = React.createClass({
     );
   },
   handleCellClick(x, y) {
-    this.setState({
-      board: revealCell(this.state.board, x, y)
+    this.setState((prevState) => {
+      board: revealCell(prevState.board, x, y)
     });
   }
 });

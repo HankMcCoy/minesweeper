@@ -4,9 +4,9 @@ import React from 'react';
 var Cell = React.createClass({
   render() {
     var cell = this.props.cell;
-    var isRevealed = cell.get('isRevealed');
-    var adjacentBombs = cell.get('adjacentBombs');
-    var isBomb = cell.get('isBomb');
+    var isBomb = cell.isBomb;
+    var isRevealed = cell.isRevealed;
+    var adjacentBombs = cell.adjacentBombs;
 
     return (
       <div className={
