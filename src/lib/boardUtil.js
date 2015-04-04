@@ -11,7 +11,7 @@ export function getBoard(numRows, numCols, numBombs) {
 
     for (let y = 0; y < numRows; y++) {
       board[x][y] = {
-        isBomb: bombCoords.has(getKey(x, y)),
+        isBomb: bombCoords.has(getCellKey({x, y})),
         isRevealed: false,
         adjacentBombs: getNeighbors({x, y}, {numRows, numCols})
           .filter((adj) => bombCoords.has(getCellKey(adj)))
@@ -39,7 +39,7 @@ export function revealCell(board, x, y) {
     exploredKeys.add(getCellKey({x, y}));
   }
   else {
-    // Reveal all cells devoice of bombs with a path to this cell and their
+    // Reveal all cells devoid of bombs with a path to this cell and their
     // adjacent cells.
     exploredKeys = getClearCellsAndNeighbors(board, x, y);
   }
@@ -118,13 +118,9 @@ function getRandomBombs(numRows, numCols, numBombs) {
   }
 
   while (bombCoords.size < numBombs)
-    bombCoords.add(getKey(getRandInt(numCols), getRandInt(numRows)));
+    bombCoords.add(getCellKey({ x: getRandInt(numCols), y: getRandInt(numRows)}));
 
   return bombCoords;
-}
-
-function getKey(x, y) {
-  return x + ',' + y;
 }
 
 /**
