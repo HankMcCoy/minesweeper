@@ -52,6 +52,7 @@
   border-style: solid;
   border-width: 1px;
   box-sizing: border-box;
+  cursor: pointer;
   display: inline-flex;
   flex: 1 1 2px;
   justify-content: center;
@@ -67,11 +68,13 @@
 .minesweeper__cell--revealed {
   background: none;
   border: none;
+  cursor: default;
 }
 
 .minesweeper__cell--bomb-lost, .minesweeper__cell--bomb-won {
   border: none;
   border-radius: 50%;
+  cursor: default;
 }
 
 .minesweeper__cell--bomb-lost {
