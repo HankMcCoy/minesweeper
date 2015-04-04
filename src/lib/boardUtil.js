@@ -6,14 +6,14 @@ export function getBoard(numRows, numCols, numBombs) {
   var board = new Array(numCols);
   var bombCoords = getRandomBombs(numRows, numCols, numBombs);
 
-  for (let x = 0; x < board.length; x++) {
+  for (let x = 0; x < numCols; x++) {
     board[x] = new Array(numRows);
 
-    for (let y = 0; y < board[x].length; y++) {
+    for (let y = 0; y < numRows; y++) {
       board[x][y] = {
         isBomb: bombCoords.has(getKey(x, y)),
         isRevealed: false,
-        adjacentBombs: getAdjacencies({x, y})
+        adjacentBombs: getAdjacencies({x, y}, {numRows, numCols})
           .filter((adj) => bombCoords.has(getCellKey(adj)))
           .length
       };
@@ -54,7 +54,11 @@ export function revealCell(board, x, y) {
 }
 
 function getClearCellsAndAdjacencies(board, x, y) {
-  var edgeKeys = new Set(getAdjacencies({x, y}).map(getCellKey));
+  var boardSize = {
+    numCols: board.size,
+    numRows: board.get(0).size
+  };
+  var edgeKeys = new Set(getAdjacencies({x, y}, boardSize).map(getCellKey));
   var nextEdgeKeys = new Set();
   var exploredKeys = new Set([
     getCellKey({x, y}),
@@ -63,14 +67,15 @@ function getClearCellsAndAdjacencies(board, x, y) {
 
   while (edgeKeys.size) {
     edgeKeys.forEach(function (edgeKey) {
-      getAdjacencies(getCoordFromKey(edgeKey))
+      getAdjacencies(getCoordFromKey(edgeKey), boardSize)
         .forEach(function (coord) {
           var key = getCellKey(coord);
+          var cell = board.getIn([coord.x, coord.y]);
 
           if (!exploredKeys.has(key)) {
             exploredKeys.add(key);
 
-            if (board.getIn([coord.x, coord.y, 'adjacentBombs']) === 0)
+            if (cell.get('adjacentBombs') === 0)
               nextEdgeKeys.add(key)
           }
         });
@@ -132,7 +137,7 @@ function getKey(x, y) {
  * Example: getAdjacencies(10, 18)
  *   returns [{x: 9, y: 17}, {x: 9, y: 18}, {x: 9, y:19}, ...]
  */
-function getAdjacencies(coord) {
+function getAdjacencies(coord, boardSize) {
   return [-1, 0, 1]
     .map(dx =>
       [-1, 0, 1]
@@ -142,6 +147,11 @@ function getAdjacencies(coord) {
           x: coord.x + dx,
           y: coord.y + dy
         }))
+        // Don't allow coordinates beyond the edges of the board.
+        .filter(coord => {
+          return coord.x >= 0 && coord.x < boardSize.numCols &&
+            coord.y >= 0 && coord.y < boardSize.numRows;
+        })
     )
     .reduce((result, arr) => result.concat(arr), [])
 }
