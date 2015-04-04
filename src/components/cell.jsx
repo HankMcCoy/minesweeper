@@ -1,9 +1,11 @@
 import classNames from 'classnames';
 import React from 'react';
+import GAME_STATE from '../lib/gameState';
 
 var Cell = React.createClass({
   render() {
     var cell = this.props.cell;
+    var gameState = this.props.gameState;
     var isBomb = cell.isBomb;
     var isRevealed = cell.isRevealed;
     var adjacentBombs = cell.adjacentBombs;
@@ -12,7 +14,8 @@ var Cell = React.createClass({
       <div className={
           classNames(
             'minesweeper__cell',
-            {'minesweeper__cell--bomb': isBomb && isRevealed},
+            {'minesweeper__cell--bomb-lost': isBomb && gameState === GAME_STATE.LOST},
+            {'minesweeper__cell--bomb-won': isBomb && gameState === GAME_STATE.WON},
             {'minesweeper__cell--revealed': !isBomb && isRevealed}
           )
         }

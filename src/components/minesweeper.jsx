@@ -1,6 +1,11 @@
 import React from 'react';
 import Board from './board';
-import { getBoard, revealCell } from '../lib/boardUtil';
+import GAME_STATE from '../lib/gameState';
+import {
+  getBoard,
+  revealCell,
+  hasWon
+} from '../lib/boardUtil';
 
 const NUM_ROWS = 16;
 const NUM_COLS = 16;
@@ -9,35 +14,60 @@ const NUM_MINES = 30;
 var Minesweeper = React.createClass({
   getInitialState() {
     return {
-      isFreshGame: true,
-      board: getBoard(NUM_ROWS, NUM_COLS, 0)
+      gameState: GAME_STATE.NEW_GAME,
+      board: getBoard(NUM_COLS, NUM_ROWS, 0)
     };
   },
   render() {
     return (
       <div className="minesweeper">
         <h2 className="minesweeper__heading">Game of Mines</h2>
-        <Board board={this.state.board} onCellClick={this.handleCellClick} />
+        <Board
+          board={this.state.board}
+          gameState={this.state.gameState}
+          onCellClick={this.handleCellClick} />
+        <div className="minesweeper__controls">
+          <button
+            className="minesweeper__new-game"
+            onClick={this.newGame}>
+            New game
+          </button>
+        </div>
       </div>
     );
   },
   handleCellClick(x, y) {
-    var board;
+    var board = this.state.board;
+    var gameState = this.state.gameState;
 
     // If this is the first turn, generate the board until we get one that
     // has a not bomb-neighboring cell at the click location.
-    if (this.state.isFreshGame) {
+    if (this.state.gameState === GAME_STATE.NEW_GAME) {
+      gameState = GAME_STATE.PLAYING;
+
       do {
-        board = getBoard(NUM_ROWS, NUM_COLS, NUM_MINES);
+        board = getBoard(NUM_COLS, NUM_ROWS, NUM_MINES);
       } while(!(board[x][y].adjacentBombs === 0 && board[x][y].isBomb === false));
     }
-    else {
-      board = this.state.board;
+
+    if (gameState === GAME_STATE.PLAYING) {
+      board = revealCell(board, x, y);
+
+      if (board[x][y].isBomb)
+        gameState = GAME_STATE.LOST;
+      else if (hasWon(board))
+        gameState = GAME_STATE.WON;
     }
 
     this.setState({
-      isFreshGame: false,
-      board: revealCell(board, x, y)
+      gameState: gameState,
+      board: board
+    });
+  },
+  newGame() {
+    this.setState({
+      gameState: GAME_STATE.NEW_GAME,
+      board: getBoard(NUM_COLS, NUM_ROWS, 0)
     });
   }
 });

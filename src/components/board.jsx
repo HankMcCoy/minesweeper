@@ -7,7 +7,10 @@ var Board = React.createClass({
       .map((col, x) => {
         var cells = col
           .map((cell, y) =>
-            <Cell cell={cell} key={y}
+            <Cell
+              cell={cell}
+              gameState={this.props.gameState}
+              key={y}
               onClick={this.props.onCellClick.bind(null, x, y)} />);
 
         return <div className="minesweeper__col" key={x}>{cells}</div>;
