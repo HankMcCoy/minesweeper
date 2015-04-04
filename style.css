@@ -1,23 +1,35 @@
 .minesweeper-container {
   width: 400px;
-  height: 400px;
+  height: 440px;
 }
 
 .minesweeper {
-  background: #ddd;
   font-family: sans-serif;
   height: 100%;
-  padding: 1px;
+  position: relative;
   width: 100%;
 }
 
+.minesweeper__heading {
+  height: 40px;
+  line-height: 40px;
+  margin: 0;
+  text-align: center;
+}
+
 .minesweeper__board {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  background: #ddd;
+  cursor: default;
   display: flex;
   flex-flow: row nowrap;
-  height: 100%;
   -webkit-user-select: none;
   user-select: none;
-  cursor: default;
 }
 
 .minesweeper__col {

@@ -16,6 +16,7 @@ var Minesweeper = React.createClass({
   render() {
     return (
       <div className="minesweeper">
+        <h2 className="minesweeper__heading">Game of Mines</h2>
         <Board board={this.state.board} onCellClick={this.handleCellClick} />
       </div>
     );
