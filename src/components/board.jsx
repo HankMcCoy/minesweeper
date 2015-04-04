@@ -3,22 +3,34 @@ import Cell from './cell';
 
 var Board = React.createClass({
   render() {
-    var cols = this.props.board
-      .map((col, x) => {
-        var cells = col
-          .map((cell, y) =>
-            <Cell
-              cell={cell}
-              gameState={this.props.gameState}
-              key={y}
-              onClick={this.props.onCellClick.bind(null, x, y)} />);
+    var rows = [];
+    var board = this.props.board;
 
-        return <div className="minesweeper__col" key={x}>{cells}</div>;
-      });
+    for (let y = 0; y < board.height; y++) {
+      let cells = [];
+
+      for (let x = 0; x < board.width; x++) {
+        let idx = y*board.width + x;
+
+        cells.push(
+          <Cell
+            cell={board.cells[idx]}
+            gameState={this.props.gameState}
+            key={x}
+            onClick={this.props.onCellClick.bind(null, idx)} />
+        );
+      }
+
+      rows.push(
+        <div className="minesweeper__row" key={y}>
+          {cells}
+        </div>
+      );
+    }
 
     return (
       <div className="minesweeper__board">
-        {cols}
+        {rows}
       </div>
     );
   }

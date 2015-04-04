@@ -3,45 +3,41 @@
  * is a bomb in it, whether it's revealed yet, and how many bombs are adjacent.
  */
 export function getBoard(width, height, numBombs) {
-  var board = new Array(width);
-  var bombCoords = new Set(getRandomBombs(width, height, numBombs));
+  var cells = new Array(width*height);
+  var bombIndices = getRandomBombs(width, height, numBombs);
 
-  for (let x = 0; x < width; x++) {
-    board[x] = new Array(height);
-
-    for (let y = 0; y < height; y++) {
-      board[x][y] = {
-        isBomb: bombCoords.has(getCellKey({x, y})),
-        isRevealed: false,
-        adjacentBombs: getNeighbors({x, y}, {height, width})
-          .filter((adj) => bombCoords.has(getCellKey(adj)))
-          .length
-      };
-    }
+  for (let idx = 0; idx < width*height; idx++) {
+    cells[idx] = {
+      isBomb: bombIndices.indexOf(idx) !== -1,
+      isRevealed: false,
+      adjacentBombs: getNeighbors(idx, {width, height})
+        .filter(idx => bombIndices.indexOf(idx) !== -1)
+        .length
+    };
   }
 
-  return board;
+  return {cells, width, height, bombIndices};
 }
 
 /**
- * Return a board with the correct cells revealed from a click on x, y.
+ * Reveal all cells that should be revealed by a click on the given
+ * cell.
+ *
+ * Mutates board in place.
  */
-export function revealCell(board, x, y) {
-  var startCell = board[x][y];
+export function revealCell(board, startIdx) {
+  var startCell = board.cells[startIdx];
 
   // If this cell is adjacent to bombs or is a bomb, only reveal it.
   if (startCell.adjacentBombs > 0 || startCell.isBomb) {
-    board[x][y].isRevealed = true;
+    startCell.isRevealed = true;
   }
   // Otherwise reveal all cells devoid of bombs with a path to this
   // cell and their adjacent cells.
   else {
-    getClearCellsAndNeighbors(board, x, y)
-      .map(getCoordFromKey)
-      .forEach(coord => { board[coord.x][coord.y].isRevealed = true; })
+    getClearCellsAndNeighbors(board, startIdx)
+      .forEach(idx => { board.cells[idx].isRevealed = true; })
   }
-
-  return board;
 }
 
 /**
@@ -49,135 +45,89 @@ export function revealCell(board, x, y) {
  * holding bombs.
  */
 export function hasWon(board) {
-  var width = board.length;
-  var height = board[0].length;
-  var revealedKeys = board
-    .map((col, x) => {
-      return col
-        .map((cell, y) => cell.isRevealed ? getCellKey({x, y}) : null)
-        .filter(key => key !== null)
-    })
-    .reduce((result, arr) => result.concat(arr), []);
-  var revealedAndBombKeys = new Set(revealedKeys.concat(getAllBombKeys(board)));
+  var revealedIndices = board.cells
+    .map((cell, idx) => cell.isRevealed ? idx : null)
+    .filter(idx => idx !== null)
+  var revealedAndBombIndices = revealedIndices.concat(board.bombIndices);
 
-  return revealedAndBombKeys.size === width*height;
+  return revealedAndBombIndices.length === board.width*board.height;
 }
 
 /**
- * Returns an array of keys of all cells that can be reached from the
- * inital cell without  through a cell that neighbors a bomb.
+ * Returns an array of indices of all cells that can be reached from the
+ * inital cell without passing through a cell that neighbors a bomb.
  */
-function getClearCellsAndNeighbors(board, x, y) {
-  var boardSize = {
-    width: board.length,
-    height: board[0].length
-  };
-  var startKey = getCellKey({x, y});
-  var edgeKeys = [startKey];
-  var nextEdgeKeys = [];
-  var exploredKeys = {[startKey]: true};
+function getClearCellsAndNeighbors(board, startIdx) {
+  var edgeIndices = [startIdx];
+  var nextEdgeIndices = [];
+  var exploredIndices = {[startIdx]: true};
 
-  while (edgeKeys.length) {
-    edgeKeys.forEach(function (edgeKey) {
-      getNeighbors(getCoordFromKey(edgeKey), boardSize)
-        .forEach(function (coord) {
-          var key = getCellKey(coord);
-          var cell = board[coord.x][coord.y];
+  while (edgeIndices.length) {
+    edgeIndices.forEach(function (edgeIdx) {
+      getNeighbors(edgeIdx, board)
+        .forEach(function (neighborIdx) {
+          var cell = board.cells[neighborIdx];
 
-          if (!exploredKeys[key]) {
-            exploredKeys[key] = true;
+          if (!exploredIndices[neighborIdx]) {
+            exploredIndices[neighborIdx] = true;
 
             if (cell.adjacentBombs === 0)
-              nextEdgeKeys.push(key);
+              nextEdgeIndices.push(neighborIdx);
           }
         });
     });
 
-    [edgeKeys, nextEdgeKeys] = [nextEdgeKeys, []];
+    [edgeIndices, nextEdgeIndices] = [nextEdgeIndices, []];
   }
 
-  return Object.keys(exploredKeys);
-}
-
-/**
- * Returns an array of keys of cells that contain bombs.
- */
-function getAllBombKeys(board) {
-  return board
-    .map((col, x) => {
-      return col
-        .map((cell, y) => cell.isBomb ? getCellKey({x, y}) : null)
-        .filter(key => key !== null)
-     })
-    .reduce((result, arr) => result.concat(arr), [])
-}
-
-/**
- * Converts an {x,y} coordinate into a string of the form 'x,y'.
- *
- * This is helpful when we want to do a simple value comparison to see
- * if two coordinates are equivalent.
- *
- * E.g. while {x:2, y:3} is not strictly equal to {x:2, y: 3}, '2,3' is
- * strictly equal to '2,3'.
- */
-function getCellKey(coord) {
-  return coord.x + ',' + coord.y;
-}
-
-/**
- * Converts a coordinate key of the form 'x,y' to an object {x,y}.
- */
-function getCoordFromKey(cellKey) {
-  var [x, y] = cellKey.split(',').map(str => parseInt(str, 10));
-
-  return { x, y };
+  return Object.keys(exploredIndices).map(idx => parseInt(idx, 10));
 }
 
 /**
  * Returns an array  of random coordinate strings.
  */
 function getRandomBombs(width, height, numBombs) {
-  var bombCoords = {};
-  var key;
+  var bombIndices = {};
+  var idx;
 
-  function getRandInt(max) {
-    return Math.floor(Math.random() * max);
+  while (Object.keys(bombIndices).length < numBombs) {
+    idx = Math.floor(Math.random() * width * height);
+
+    bombIndices[idx] = true;
   }
 
-  while (Object.keys(bombCoords).length < numBombs) {
-    key = getCellKey({
-      x: getRandInt(width),
-      y: getRandInt(height)
-    });
+  return Object.keys(bombIndices).map(idx => parseInt(idx, 10));
+}
 
-    bombCoords[key] = true;
-  }
-
-  return Object.keys(bombCoords);
+function getCoord(idx, boardSize) {
+  return {
+    x: idx % boardSize.width,
+    y: Math.floor(idx/boardSize.width)
+  };
 }
 
 /**
- * Get an array of coordinates adjacent to the given coordinate.
- *
- * Example: getNeighbors(10, 18)
- *   returns [{x: 9, y: 17}, {x: 9, y: 18}, {x: 9, y:19}, ...]
+ * Get an array of indices adjacent to the given index.
  */
-function getNeighbors(coord, boardSize) {
-  return [-1, 0, 1]
+function getNeighbors(startIdx, boardSize) {
+  var {x, y} = getCoord(startIdx, boardSize);
+
+  function getDiffArr(pos, size) {
+    return [
+      pos > 0 && -1,
+      0,
+      pos < size - 1 && 1
+    ].filter(x => x !== false);
+  }
+
+  return getDiffArr(x, boardSize.width)
     .map(dx =>
-      [-1, 0, 1]
+      getDiffArr(y, boardSize.height)
         // Don't include the original coordinate.
         .filter(dy => dx !== 0 || dy !== 0)
-        .map(dy => ({
-          x: coord.x + dx,
-          y: coord.y + dy
-        }))
+        .map(dy => startIdx + dy*boardSize.width + dx)
         // Don't allow coordinates beyond the edges of the board.
-        .filter(coord => {
-          return coord.x >= 0 && coord.x < boardSize.width &&
-            coord.y >= 0 && coord.y < boardSize.height;
-        })
+        .filter(idx => idx >= 0 && idx < boardSize.width*boardSize.height)
     )
     .reduce((result, arr) => result.concat(arr), [])
 }

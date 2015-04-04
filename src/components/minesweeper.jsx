@@ -9,7 +9,7 @@ import {
 
 const NUM_ROWS = 16;
 const NUM_COLS = 16;
-const NUM_MINES = 30;
+const NUM_MINES = 3;
 
 var Minesweeper = React.createClass({
   getInitialState() {
@@ -36,7 +36,7 @@ var Minesweeper = React.createClass({
       </div>
     );
   },
-  handleCellClick(x, y) {
+  handleCellClick(idx) {
     var board = this.state.board;
     var gameState = this.state.gameState;
 
@@ -47,13 +47,13 @@ var Minesweeper = React.createClass({
 
       do {
         board = getBoard(NUM_COLS, NUM_ROWS, NUM_MINES);
-      } while(!(board[x][y].adjacentBombs === 0 && board[x][y].isBomb === false));
+      } while(!(board.cells[idx].adjacentBombs === 0 && board.cells[idx].isBomb === false));
     }
 
     if (gameState === GAME_STATE.PLAYING) {
-      board = revealCell(board, x, y);
+      revealCell(board, idx);
 
-      if (board[x][y].isBomb)
+      if (board.cells[idx].isBomb)
         gameState = GAME_STATE.LOST;
       else if (hasWon(board))
         gameState = GAME_STATE.WON;

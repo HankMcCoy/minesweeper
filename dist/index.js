@@ -86,7 +86,7 @@
 
 	var NUM_ROWS = 16;
 	var NUM_COLS = 16;
-	var NUM_MINES = 30;
+	var NUM_MINES = 3;
 
 	var Minesweeper = React.createClass({
 	  displayName: "Minesweeper",
@@ -123,7 +123,7 @@
 	      )
 	    );
 	  },
-	  handleCellClick: function handleCellClick(x, y) {
+	  handleCellClick: function handleCellClick(idx) {
 	    var board = this.state.board;
 	    var gameState = this.state.gameState;
 
@@ -134,13 +134,13 @@
 
 	      do {
 	        board = getBoard(NUM_COLS, NUM_ROWS, NUM_MINES);
-	      } while (!(board[x][y].adjacentBombs === 0 && board[x][y].isBomb === false));
+	      } while (!(board.cells[idx].adjacentBombs === 0 && board.cells[idx].isBomb === false));
 	    }
 
 	    if (gameState === GAME_STATE.PLAYING) {
-	      board = revealCell(board, x, y);
+	      revealCell(board, idx);
 
-	      if (board[x][y].isBomb) gameState = GAME_STATE.LOST;else if (hasWon(board)) gameState = GAME_STATE.WON;
+	      if (board.cells[idx].isBomb) gameState = GAME_STATE.LOST;else if (hasWon(board)) gameState = GAME_STATE.WON;
 	    }
 
 	    this.setState({
@@ -209,28 +209,33 @@
 	  displayName: "Board",
 
 	  render: function render() {
-	    var _this = this;
+	    var rows = [];
+	    var board = this.props.board;
 
-	    var cols = this.props.board.map(function (col, x) {
-	      var cells = col.map(function (cell, y) {
-	        return React.createElement(Cell, {
-	          cell: cell,
-	          gameState: _this.props.gameState,
-	          key: y,
-	          onClick: _this.props.onCellClick.bind(null, x, y) });
-	      });
+	    for (var y = 0; y < board.height; y++) {
+	      var cells = [];
 
-	      return React.createElement(
+	      for (var x = 0; x < board.width; x++) {
+	        var idx = y * board.width + x;
+
+	        cells.push(React.createElement(Cell, {
+	          cell: board.cells[idx],
+	          gameState: this.props.gameState,
+	          key: x,
+	          onClick: this.props.onCellClick.bind(null, idx) }));
+	      }
+
+	      rows.push(React.createElement(
 	        "div",
-	        { className: "minesweeper__col", key: x },
+	        { className: "minesweeper__row", key: y },
 	        cells
-	      );
-	    });
+	      ));
+	    }
 
 	    return React.createElement(
 	      "div",
 	      { className: "minesweeper__board" },
-	      cols
+	      rows
 	    );
 	  }
 	});
@@ -264,7 +269,10 @@
 	exports.getBoard = getBoard;
 
 	/**
-	 * Return a board with the correct cells revealed from a click on x, y.
+	 * Reveal all cells that should be revealed by a click on the given
+	 * cell.
+	 *
+	 * Mutates board in place.
 	 */
 	exports.revealCell = revealCell;
 
@@ -278,188 +286,137 @@
 	});
 
 	function getBoard(width, height, numBombs) {
-	  var board = new Array(width);
-	  var bombCoords = new Set(getRandomBombs(width, height, numBombs));
+	  var cells = new Array(width * height);
+	  var bombIndices = getRandomBombs(width, height, numBombs);
 
-	  for (var x = 0; x < width; x++) {
-	    board[x] = new Array(height);
-
-	    for (var y = 0; y < height; y++) {
-	      board[x][y] = {
-	        isBomb: bombCoords.has(getCellKey({ x: x, y: y })),
+	  for (var idx = 0; idx < width * height; idx++) {
+	    (function (idx) {
+	      cells[idx] = {
+	        isBomb: bombIndices.indexOf(idx) !== -1,
 	        isRevealed: false,
-	        adjacentBombs: getNeighbors({ x: x, y: y }, { height: height, width: width }).filter(function (adj) {
-	          return bombCoords.has(getCellKey(adj));
+	        adjacentBombs: getNeighbors(idx, { width: width, height: height }).filter(function (idx) {
+	          return bombIndices.indexOf(idx) !== -1;
 	        }).length
 	      };
-	    }
+	    })(idx);
 	  }
 
-	  return board;
+	  return { cells: cells, width: width, height: height, bombIndices: bombIndices };
 	}
 
-	function revealCell(board, x, y) {
-	  var startCell = board[x][y];
+	function revealCell(board, startIdx) {
+	  var startCell = board.cells[startIdx];
 
 	  // If this cell is adjacent to bombs or is a bomb, only reveal it.
 	  if (startCell.adjacentBombs > 0 || startCell.isBomb) {
-	    board[x][y].isRevealed = true;
+	    startCell.isRevealed = true;
 	  }
 	  // Otherwise reveal all cells devoid of bombs with a path to this
 	  // cell and their adjacent cells.
 	  else {
-	    getClearCellsAndNeighbors(board, x, y).map(getCoordFromKey).forEach(function (coord) {
-	      board[coord.x][coord.y].isRevealed = true;
+	    getClearCellsAndNeighbors(board, startIdx).forEach(function (idx) {
+	      board.cells[idx].isRevealed = true;
 	    });
 	  }
-
-	  return board;
 	}
 
 	function hasWon(board) {
-	  var width = board.length;
-	  var height = board[0].length;
-	  var revealedKeys = board.map(function (col, x) {
-	    return col.map(function (cell, y) {
-	      return cell.isRevealed ? getCellKey({ x: x, y: y }) : null;
-	    }).filter(function (key) {
-	      return key !== null;
-	    });
-	  }).reduce(function (result, arr) {
-	    return result.concat(arr);
-	  }, []);
-	  var revealedAndBombKeys = new Set(revealedKeys.concat(getAllBombKeys(board)));
+	  var revealedIndices = board.cells.map(function (cell, idx) {
+	    return cell.isRevealed ? idx : null;
+	  }).filter(function (idx) {
+	    return idx !== null;
+	  });
+	  var revealedAndBombIndices = revealedIndices.concat(board.bombIndices);
 
-	  return revealedAndBombKeys.size === width * height;
+	  return revealedAndBombIndices.length === board.width * board.height;
 	}
 
 	/**
-	 * Returns an array of keys of all cells that can be reached from the
-	 * inital cell without  through a cell that neighbors a bomb.
+	 * Returns an array of indices of all cells that can be reached from the
+	 * inital cell without passing through a cell that neighbors a bomb.
 	 */
-	function getClearCellsAndNeighbors(board, x, y) {
-	  var boardSize = {
-	    width: board.length,
-	    height: board[0].length
-	  };
-	  var startKey = getCellKey({ x: x, y: y });
-	  var edgeKeys = [startKey];
-	  var nextEdgeKeys = [];
-	  var exploredKeys = _defineProperty({}, startKey, true);
+	function getClearCellsAndNeighbors(board, startIdx) {
+	  var edgeIndices = [startIdx];
+	  var nextEdgeIndices = [];
+	  var exploredIndices = _defineProperty({}, startIdx, true);
 
-	  while (edgeKeys.length) {
-	    edgeKeys.forEach(function (edgeKey) {
-	      getNeighbors(getCoordFromKey(edgeKey), boardSize).forEach(function (coord) {
-	        var key = getCellKey(coord);
-	        var cell = board[coord.x][coord.y];
+	  while (edgeIndices.length) {
+	    edgeIndices.forEach(function (edgeIdx) {
+	      getNeighbors(edgeIdx, board).forEach(function (neighborIdx) {
+	        var cell = board.cells[neighborIdx];
 
-	        if (!exploredKeys[key]) {
-	          exploredKeys[key] = true;
+	        if (!exploredIndices[neighborIdx]) {
+	          exploredIndices[neighborIdx] = true;
 
-	          if (cell.adjacentBombs === 0) nextEdgeKeys.push(key);
+	          if (cell.adjacentBombs === 0) nextEdgeIndices.push(neighborIdx);
 	        }
 	      });
 	    });
 
-	    var _ref = [nextEdgeKeys, []];
+	    var _ref = [nextEdgeIndices, []];
 
 	    var _ref2 = _slicedToArray(_ref, 2);
 
-	    edgeKeys = _ref2[0];
-	    nextEdgeKeys = _ref2[1];
+	    edgeIndices = _ref2[0];
+	    nextEdgeIndices = _ref2[1];
 	  }
 
-	  return Object.keys(exploredKeys);
-	}
-
-	/**
-	 * Returns an array of keys of cells that contain bombs.
-	 */
-	function getAllBombKeys(board) {
-	  return board.map(function (col, x) {
-	    return col.map(function (cell, y) {
-	      return cell.isBomb ? getCellKey({ x: x, y: y }) : null;
-	    }).filter(function (key) {
-	      return key !== null;
-	    });
-	  }).reduce(function (result, arr) {
-	    return result.concat(arr);
-	  }, []);
-	}
-
-	/**
-	 * Converts an {x,y} coordinate into a string of the form 'x,y'.
-	 *
-	 * This is helpful when we want to do a simple value comparison to see
-	 * if two coordinates are equivalent.
-	 *
-	 * E.g. while {x:2, y:3} is not strictly equal to {x:2, y: 3}, '2,3' is
-	 * strictly equal to '2,3'.
-	 */
-	function getCellKey(coord) {
-	  return coord.x + "," + coord.y;
-	}
-
-	/**
-	 * Converts a coordinate key of the form 'x,y' to an object {x,y}.
-	 */
-	function getCoordFromKey(cellKey) {
-	  var _cellKey$split$map = cellKey.split(",").map(function (str) {
-	    return parseInt(str, 10);
+	  return Object.keys(exploredIndices).map(function (idx) {
+	    return parseInt(idx, 10);
 	  });
-
-	  var _cellKey$split$map2 = _slicedToArray(_cellKey$split$map, 2);
-
-	  var x = _cellKey$split$map2[0];
-	  var y = _cellKey$split$map2[1];
-
-	  return { x: x, y: y };
 	}
 
 	/**
 	 * Returns an array  of random coordinate strings.
 	 */
 	function getRandomBombs(width, height, numBombs) {
-	  var bombCoords = {};
-	  var key;
+	  var bombIndices = {};
+	  var idx;
 
-	  function getRandInt(max) {
-	    return Math.floor(Math.random() * max);
+	  while (Object.keys(bombIndices).length < numBombs) {
+	    idx = Math.floor(Math.random() * width * height);
+
+	    bombIndices[idx] = true;
 	  }
 
-	  while (Object.keys(bombCoords).length < numBombs) {
-	    key = getCellKey({
-	      x: getRandInt(width),
-	      y: getRandInt(height)
-	    });
+	  return Object.keys(bombIndices).map(function (idx) {
+	    return parseInt(idx, 10);
+	  });
+	}
 
-	    bombCoords[key] = true;
-	  }
-
-	  return Object.keys(bombCoords);
+	function getCoord(idx, boardSize) {
+	  return {
+	    x: idx % boardSize.width,
+	    y: Math.floor(idx / boardSize.width)
+	  };
 	}
 
 	/**
-	 * Get an array of coordinates adjacent to the given coordinate.
-	 *
-	 * Example: getNeighbors(10, 18)
-	 *   returns [{x: 9, y: 17}, {x: 9, y: 18}, {x: 9, y:19}, ...]
+	 * Get an array of indices adjacent to the given index.
 	 */
-	function getNeighbors(coord, boardSize) {
-	  return [-1, 0, 1].map(function (dx) {
-	    return [-1, 0, 1]
+	function getNeighbors(startIdx, boardSize) {
+	  var _getCoord = getCoord(startIdx, boardSize);
+
+	  var x = _getCoord.x;
+	  var y = _getCoord.y;
+
+	  function getDiffArr(pos, size) {
+	    return [pos > 0 && -1, 0, pos < size - 1 && 1].filter(function (x) {
+	      return x !== false;
+	    });
+	  }
+
+	  return getDiffArr(x, boardSize.width).map(function (dx) {
+	    return getDiffArr(y, boardSize.height)
 	    // Don't include the original coordinate.
 	    .filter(function (dy) {
 	      return dx !== 0 || dy !== 0;
 	    }).map(function (dy) {
-	      return {
-	        x: coord.x + dx,
-	        y: coord.y + dy
-	      };
+	      return startIdx + dy * boardSize.width + dx;
 	    })
 	    // Don't allow coordinates beyond the edges of the board.
-	    .filter(function (coord) {
-	      return coord.x >= 0 && coord.x < boardSize.width && coord.y >= 0 && coord.y < boardSize.height;
+	    .filter(function (idx) {
+	      return idx >= 0 && idx < boardSize.width * boardSize.height;
 	    });
 	  }).reduce(function (result, arr) {
 	    return result.concat(arr);
