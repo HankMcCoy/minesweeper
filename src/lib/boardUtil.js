@@ -13,8 +13,8 @@ export function getBoard(numRows, numCols, numBombs) {
       board[x][y] = {
         isBomb: bombCoords.has(getKey(x, y)),
         isRevealed: false,
-        adjacentBombs: getAdjacencies(x, y)
-          .filter((adj) => bombCoords.has(getKey(adj.x, adj.y)))
+        adjacentBombs: getAdjacencies({x, y})
+          .filter((adj) => bombCoords.has(getCellKey(adj)))
           .length
       };
     }
@@ -54,7 +54,7 @@ export function revealCell(board, x, y) {
 }
 
 function getClearCellsAndAdjacencies(board, x, y) {
-  var edgeKeys = new Set(getAdjacencies(x, y).map(getCellKey));
+  var edgeKeys = new Set(getAdjacencies({x, y}).map(getCellKey));
   var nextEdgeKeys = new Set();
   var exploredKeys = new Set([
     getCellKey({x, y}),
@@ -85,10 +85,13 @@ function getClearCellsAndAdjacencies(board, x, y) {
 function getAllBombKeys(board) {
   return new Set(
     board
-      .map((row, y) =>
-        row
-          .map((cell, x) => cell.get('isBomb') ? getCellKey({x, y}) : null)
-          .filter(key => key !== null))
+      .toArray()
+      .map((col, x) => {
+        return col
+          .toArray()
+          .map((cell, y) => cell.get('isBomb') ? getCellKey({x, y}) : null)
+          .filter(key => key !== null)
+       })
       .reduce((result, arr) => result.concat(arr), [])
   );
 }
@@ -98,7 +101,7 @@ function getCellKey(coord) {
 }
 
 function getCoordFromKey(cellKey) {
-  var [x, y] = cellKey.split(',');
+  var [x, y] = cellKey.split(',').map(str => parseInt(str, 10));
 
   return { x, y };
 }
@@ -129,12 +132,16 @@ function getKey(x, y) {
  * Example: getAdjacencies(10, 18)
  *   returns [{x: 9, y: 17}, {x: 9, y: 18}, {x: 9, y:19}, ...]
  */
-function getAdjacencies(x, y) {
+function getAdjacencies(coord) {
   return [-1, 0, 1]
     .map(dx =>
       [-1, 0, 1]
+        // Don't include the original coordinate.
         .filter(dy => dx !== 0 || dy !== 0)
-        .map(dy => ({ x: x + dx, y: y + dy }))
+        .map(dy => ({
+          x: coord.x + dx,
+          y: coord.y + dy
+        }))
     )
     .reduce((result, arr) => result.concat(arr), [])
 }

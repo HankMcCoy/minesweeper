@@ -3,21 +3,21 @@ import Cell from './cell';
 
 var Board = React.createClass({
   render() {
-    var rows = this.props.board
+    var cols = this.props.board
       .toArray()
-      .map((row, y) => {
-        var cells = row
+      .map((col, x) => {
+        var cells = col
           .toArray()
-          .map((cell, x) =>
-            <Cell cell={cell} key={x}
+          .map((cell, y) =>
+            <Cell cell={cell} key={y}
               onClick={this.props.onCellClick.bind(null, x, y)} />);
 
-        return <div className="minesweeper__row" key={y}>{cells}</div>;
+        return <div className="minesweeper__col" key={x}>{cells}</div>;
       });
 
     return (
       <div className="minesweeper__board">
-        {rows}
+        {cols}
       </div>
     );
   }

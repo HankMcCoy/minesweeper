@@ -13,17 +13,18 @@
 
 .minesweeper__board {
   display: flex;
-  flex-flow: column nowrap;
+  flex-flow: row nowrap;
   height: 100%;
   -webkit-user-select: none;
   user-select: none;
   cursor: default;
 }
 
-.minesweeper__row {
+.minesweeper__col {
   align-items: stretch;
   display: flex;
-  flex-flow: row nowrap;
+  flex: 1 1 0;
+  flex-flow: column nowrap;
 }
 
 .minesweeper__cell {
