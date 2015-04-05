@@ -9,7 +9,7 @@ import {
 
 const NUM_ROWS = 16;
 const NUM_COLS = 16;
-const NUM_MINES = 3;
+const NUM_MINES = 30;
 
 var Minesweeper = React.createClass({
   getInitialState() {

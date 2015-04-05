@@ -83,7 +83,7 @@
 
 	var NUM_ROWS = 16;
 	var NUM_COLS = 16;
-	var NUM_MINES = 3;
+	var NUM_MINES = 30;
 
 	var Minesweeper = React.createClass({
 	  displayName: "Minesweeper",
