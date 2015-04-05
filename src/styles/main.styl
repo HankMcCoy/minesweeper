@@ -1,3 +1,5 @@
+@import 'nib';
+
 .minesweeper {
   font-family: sans-serif;
   height: 100%;
@@ -23,7 +25,6 @@
   display: flex;
   flex: 10 0 0;
   flex-flow: column nowrap;
-  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -57,32 +58,25 @@
   flex: 1 1 2px;
   justify-content: center;
   margin: 1px;
+
+  &--revealed {
+    background: none;
+    border: none;
+    cursor: default;
+  }
+
+  &--bomb-lost, &--bomb-won {
+    border: none;
+    border-radius: 50%;
+    cursor: default;
+  }
+
+  &--bomb-lost {
+    background: #e33;
+  }
+
+  &--bomb-won {
+    background: #3e3;
+  }
 }
 
-.minesweeper__cell:before {
-  content: '';
-  display: block;
-  padding-top: 100%;
-}
-
-.minesweeper__cell--revealed {
-  background: none;
-  border: none;
-  cursor: default;
-}
-
-.minesweeper__cell--bomb-lost, .minesweeper__cell--bomb-won {
-  border: none;
-  border-radius: 50%;
-  cursor: default;
-}
-
-.minesweeper__cell--bomb-lost {
-  background: #e33;
-}
-
-.minesweeper__cell--bomb-won {
-  background: #3e3;
-}
-
-.

@@ -11,6 +11,10 @@
   "devDependencies": {
     "babel-core": "^4.7.16",
     "babel-loader": "^4.3.0",
+    "css-loader": "^0.9.1",
+    "nib": "^1.1.0",
+    "style-loader": "^0.9.0",
+    "stylus-loader": "^1.0.0",
     "webpack": "^1.7.3"
   },
   "dependencies": {
