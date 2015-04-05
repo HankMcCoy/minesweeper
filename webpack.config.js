@@ -1,4 +1,5 @@
 var nib = require('nib');
+var webpack = require('webpack');
 
 module.exports = {
   entry: './src/bootstrap.jsx',
@@ -17,5 +18,8 @@ module.exports = {
   },
   stylus: {
     use: [nib()]
-  }
+  },
+  plugins: [
+    new webpack.optimize.UglifyJsPlugin({ minimize: true })
+  ]
 };
