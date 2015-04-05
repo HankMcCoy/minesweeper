@@ -1,10 +1,10 @@
 /**
- * Returns a two-dimensional array of cells, each of which knows whether there
- * is a bomb in it, whether it's revealed yet, and how many bombs are adjacent.
+ * Returns an object containing all information regarding the state of
+ * the board.
  */
 export function getBoard(width, height, numBombs) {
   var cells = new Array(width*height);
-  var bombIndices = getRandomBombs(width, height, numBombs);
+  var bombIndices = getRandomIndices(width, height, numBombs);
 
   for (let idx = 0; idx < width*height; idx++) {
     cells[idx] = {
@@ -84,45 +84,37 @@ function getClearCellsAndNeighbors(board, startIdx) {
 }
 
 /**
- * Returns an array  of random coordinate strings.
+ * Returns an array  of random board indices.
  */
-function getRandomBombs(width, height, numBombs) {
-  var bombIndices = {};
+function getRandomIndices(width, height, numIndices) {
+  var indices = {};
   var idx;
 
-  while (Object.keys(bombIndices).length < numBombs) {
+  while (Object.keys(indices).length < numIndices) {
     idx = Math.floor(Math.random() * width * height);
 
-    bombIndices[idx] = true;
+    indices[idx] = true;
   }
 
-  return Object.keys(bombIndices).map(idx => parseInt(idx, 10));
-}
-
-function getCoord(idx, boardSize) {
-  return {
-    x: idx % boardSize.width,
-    y: Math.floor(idx/boardSize.width)
-  };
+  return Object.keys(indices).map(idx => parseInt(idx, 10));
 }
 
 /**
  * Get an array of indices adjacent to the given index.
  */
 function getNeighbors(startIdx, boardSize) {
-  var {x, y} = getCoord(startIdx, boardSize);
+  var x = startIdx % boardSize.width;
+  var y = Math.floor(startIdx/boardSize.width);
 
-  function getDiffArr(pos, size) {
-    return [
-      pos > 0 && -1,
-      0,
-      pos < size - 1 && 1
-    ].filter(x => x !== false);
+  function isOnBoard(pos, size) {
+    return pos >= 0 && pos < size;
   }
 
-  return getDiffArr(x, boardSize.width)
+  return [-1, 0, 1]
+    .filter(dx => isOnBoard(x + dx, boardSize.width))
     .map(dx =>
-      getDiffArr(y, boardSize.height)
+      [-1, 0, 1]
+        .filter(dy => isOnBoard(y + dy, boardSize.height))
         // Don't include the original coordinate.
         .filter(dy => dx !== 0 || dy !== 0)
         .map(dy => startIdx + dy*boardSize.width + dx)
